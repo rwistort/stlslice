@@ -8,6 +8,104 @@ from pyx import *
 
 
 
+
+#stlObject
+#stl = stlObject(fileName)
+#stl.printCoords()
+#stl.maxDimensions()
+#stl.rotate([x y z], angle)
+#stl.scale(scalingFactor)
+#stl.Translate([x y z])
+#stl.getStlList() [[x y z][x y z]]
+
+
+
+
+class stlObject:
+
+    def __init__(self, filename):    
+     
+
+        f = open(filename, 'r')
+
+        self.A = 0
+        self.B = 0
+        self.C = 0
+        self.vertexCount = 0
+        self.triangleList = []
+
+        try:
+            for line in f:
+                if string.find(line, 'vertex') != -1:
+                    L = string.split(line)
+                    V = [float(L[1]), float(L[2]), float(L[3])]
+                    if self.vertexCount == 0:
+                        self.A = V
+                        self.vertexCount += 1
+                    elif self.vertexCount == 1:
+                        self.B = V
+                        self.vertexCount += 1
+                    else:
+                        self.C = V
+                        self.vertexCount = 0
+                        s = [self.A, self.B, self.C]
+                        self.triangleList.append(s)
+        finally:
+            f.close()
+
+
+    def printAllTriangles(self):
+        for t in self.triangleList:
+            print "point A: ", t[0]
+            print "point B: ", t[1]
+            print "point C: ", t[2]
+            print " "
+
+
+    # Find min and max values for x, y, z for stl model
+    # return format is list:
+    # [xMin, xMax, yMin, yMax, zMin, zMax]
+    def boundingDimensions(self):
+        xMin = 10000000
+        xMax = -10000000
+        yMin = 10000000
+        yMax = -10000000
+        zMin = 10000000
+        zMax = -10000000
+
+        for t in self.triangleList:
+            for p in t:
+                x = p[0]
+                y = p[1]
+                z = p[2]
+                if x < xMin: xMin = x
+                if x > xMax: xMax = x
+                if y < yMin: yMin = y
+                if y > yMax: yMax = y
+                if z < zMin: zMin = z
+                if z > zMax: zMax = z
+
+        return [xMin, xMax, yMin, yMax, zMin, zMax]
+
+
+#stlProcess()
+#stlP.computelayerList(z, stlObject)
+#tlP.saveLayerListPDF(layerList, fileName)
+#stlP.saveLayerListEPS(layerList, fileName)
+#stlP.saveLayerListJPEG(layerList, fileName)
+
+
+
+
+
+
+
+
+
+
+
+
+
 class stlVector:
      def __init__(self, X, Y, Z):    
         self.X = X
@@ -272,7 +370,13 @@ class stlModel:
         c.writePDFfile(fileName)
 
 
+# here try this out
 
+if __name__ == "__main__":
+
+    s = stlObject("Camera.STL")
+    #s.printAllTriangles()
+    print s.boundingDimensions()
 
 
 
