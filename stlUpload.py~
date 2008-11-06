@@ -3,23 +3,14 @@
 import string
 import os
 import sys
+import math
 import collections
 from pyx import *
+from Numeric import *
 
 
-
-
-#stlObject
-#stl = stlObject(fileName)
-#stl.printCoords()
-#stl.maxDimensions()
-#stl.rotate([x y z], angle)
-#stl.scale(scalingFactor)
-#stl.Translate([x y z])
-#stl.getStlList() [[x y z][x y z]]
-
-
-
+# Class for turning stl files into a list of tiangles
+# some 3d manpiulation funcitons are also available
 
 class stlObject:
 
@@ -88,6 +79,80 @@ class stlObject:
         return [xMin, xMax, yMin, yMax, zMin, zMax]
 
 
+    # change the size of the model by this scaling Factor
+    def scale(self, scalingFactor):
+        for t in self.triangleList:
+            for p in t:
+                p[0] *= scalingFactor
+                p[1] *= scalingFactor
+                p[2] *= scalingFactor
+
+    # change the size of the model by this scaling Factor
+    def translate(self, translationVector):
+        x = translationVector[0]
+        y = translationVector[1]
+        z = translationVector[2]
+        for t in self.triangleList:
+            for p in t:
+                p[0] += x
+                p[1] += y
+                p[2] += z
+
+
+    # rotate using about the X axis 
+    # angle is in radians
+    def rotateX(self, angle):
+
+        for t in self.triangleList:
+            for p in t:
+                matrix = array(([p[0],], [p[1],], [p[2],], [1,]), Float)
+                rot = array(([1, 0, 0, 0],
+                              [0, cos(angle), -sin(angle), 0],
+                              [0, sin(angle), cos(angle), 0],
+                              [0, 0, 0, 1]), Float)
+                matrix = matrixmultiply(rot, matrix)
+                p[0] = float(matrix[0]) 
+                p[1] = float(matrix[1]) 
+                p[2] = float(matrix[2]) 
+
+    # rotate using about the Y axis 
+    # angle is in radians
+    def rotateY(self, angle):
+
+        for t in self.triangleList:
+            for p in t:
+                matrix = array(([p[0],], [p[1],], [p[2],], [1,]), Float)
+                rot = array(([cos(angle), 0, sin(angle), 0],
+                              [0, 1, 0, 0],
+                              [-sin(angle), 0, cos(angle), 0],
+                              [0, 0, 0, 1]), Float)
+                matrix = matrixmultiply(rot, matrix)
+                p[0] = float(matrix[0]) 
+                p[1] = float(matrix[1]) 
+                p[2] = float(matrix[2]) 
+
+    # rotate using about the Z axis 
+    # angle is in radians
+    def rotateZ(self, angle):
+
+        for t in self.triangleList:
+            for p in t:
+                matrix = array(([p[0],], [p[1],], [p[2],], [1,]), Float)
+                rot = array(([cos(angle),  -sin(angle), 0, 0],
+                              [sin(angle), cos(angle), 0, 0],
+                              [0, 0, 1, 0],
+                              [0, 0, 0, 1]), Float)
+                matrix = matrixmultiply(rot, matrix)
+                p[0] = float(matrix[0]) 
+                p[1] = float(matrix[1]) 
+                p[2] = float(matrix[2]) 
+
+ 
+
+
+
+
+#stl.scale(scalingFactor)
 #stlProcess()
 #stlP.computelayerList(z, stlObject)
 #tlP.saveLayerListPDF(layerList, fileName)
@@ -100,38 +165,6 @@ class stlObject:
 
 
 
-
-
-
-
-
-
-class stlVector:
-     def __init__(self, X, Y, Z):    
-        self.X = X
-        self.Y = Y
-        self.Z = Z
-    
-class stlTriangle:
-    def __init__(self, N, A, B, C):    
-        self.N = N
-        self.A = A
-        self.B = B
-        self.C = C
-
-    def printTriangle(self):
-        print "triangle Normal: ", self.N.X, " ", self.N.Y, " ", self.N.Z
-        print "virtex 1: ", self.A.X, " ", self.A.Y, " ", self.A.Z
-        print "virtex 2: ", self.B.X, " ", self.B.Y, " ", self.B.Z
-        print "virtex 3: ", self.C.X, " ", self.C.Y, " ", self.C.Z
-        print " "
-
-class lineSegment:
-     def __init__(self, X1, Y1, X2, Y2):    
-        self.X1 = X1
-        self.Y1 = Y1
-        self.X2 = X2
-        self.Y2 = Y2
 
 
 class stlModel:
@@ -173,30 +206,6 @@ class stlModel:
             f.close()
 
 
-    def printAllTriangles(self):
-        for t in self.triangleList:
-            t.printTriangle()
-
-
-    def findMinAndMazZ(self):
-        minZ = 500
-        maxZ = -500
-        for t in self.triangleList:
-            if t.A.Z < minZ:
-                minZ = t.A.Z 
-            if t.B.Z < minZ:
-                minZ = t.B.Z 
-            if t.C.Z < minZ:
-                minZ = t.C.Z 
-            if t.A.Z > maxZ:
-                maxZ = t.A.Z 
-            if t.B.Z > maxZ:
-                maxZ = t.B.Z 
-            if t.C.Z > maxZ:
-                maxZ = t.C.Z 
-
-        print "min Z value: ", minZ
-        print "maz Z value: ", maxZ
 
 
 
@@ -212,19 +221,7 @@ class stlModel:
         return l
 
 
-    # given a list of points and two more, add a bunch of points between the two...
-    def addPointsInMiddle(self, listToBuild, start, end, gridSpace):
-        
-        xd = start[0] - end[0]
-        yd = start[1] - end[1]
-        d = ((xd ** 2) + (yd ** 2)) ** 0.5
-        n = d / gridSpace
-        count = 1
-        while count < n:
-            x = end[0] + (xd * (count/n))
-            y = end[1] + (yd * (count/n))
-            listToBuild.append([x, y])
-            count += 1
+
 
 
     # given a list of points and single point find the closest point in list
@@ -370,13 +367,22 @@ class stlModel:
         c.writePDFfile(fileName)
 
 
+
+
 # here try this out
 
 if __name__ == "__main__":
 
-    s = stlObject("Camera_cm.STL")
+    #make stl object 
+    s = stlObject("Camera.STL")
     #s.printAllTriangles()
-    print s.boundingDimensions()
+
+    #print s.boundingDimensions()
+    
+    # Rotation Sensation
+    #s.rotateX(180 * (math.pi/180.0))
+    #s.rotateY(180 * (math.pi/180.0))
+    #s.rotateZ(180 * (math.pi/180.0))
 
 
 
